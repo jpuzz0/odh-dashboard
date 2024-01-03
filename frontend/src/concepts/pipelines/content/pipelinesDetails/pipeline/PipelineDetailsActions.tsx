@@ -9,17 +9,16 @@ import {
 } from '@patternfly/react-core/deprecated';
 
 import { usePipelinesAPI } from '~/concepts/pipelines/context';
+import { DeletePipelineVersionModal } from '~/concepts/pipelines/content/delete';
 import PipelineVersionImportModal from '~/concepts/pipelines/content/import/PipelineVersionImportModal';
 import { PipelineKF, PipelineVersionKF } from '~/concepts/pipelines/kfTypes';
 
 type PipelineDetailsActionsProps = {
-  onDelete: () => void;
   pipeline: PipelineKF | null;
   pipelineVersion: PipelineVersionKF | null;
 };
 
 const PipelineDetailsActions: React.FC<PipelineDetailsActionsProps> = ({
-  onDelete,
   pipeline,
   pipelineVersion,
 }) => {
@@ -27,13 +26,19 @@ const PipelineDetailsActions: React.FC<PipelineDetailsActionsProps> = ({
   const { namespace } = usePipelinesAPI();
   const [open, setOpen] = React.useState(false);
   const [isVersionImportModalOpen, setIsVersionImportModalOpen] = React.useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
+  const hasPipelineAndVersion = pipeline && pipelineVersion;
 
   return (
     <>
       <Dropdown
         onSelect={() => setOpen(false)}
         toggle={
-          <DropdownToggle toggleVariant="primary" onToggle={() => setOpen(!open)}>
+          <DropdownToggle
+            toggleVariant="primary"
+            onToggle={() => setOpen(!open)}
+            isDisabled={!hasPipelineAndVersion}
+          >
             Actions
           </DropdownToggle>
         }
@@ -58,8 +63,8 @@ const PipelineDetailsActions: React.FC<PipelineDetailsActionsProps> = ({
             View runs
           </DropdownItem>,
           <DropdownSeparator key="separator-2" />,
-          <DropdownItem key="delete-pipeline" onClick={() => onDelete()}>
-            Delete pipeline
+          <DropdownItem key="delete" onClick={() => setIsDeleteModalOpen(true)}>
+            Delete
           </DropdownItem>,
         ]}
       />
@@ -75,6 +80,16 @@ const PipelineDetailsActions: React.FC<PipelineDetailsActionsProps> = ({
           }
         }}
       />
+
+      {hasPipelineAndVersion && (
+        <DeletePipelineVersionModal
+          isOpen={isDeleteModalOpen}
+          pipelineName={pipeline.name}
+          pipelineVersion={pipelineVersion}
+          onDelete={() => navigate(`/pipelines/${namespace}`)}
+          onClose={() => setIsDeleteModalOpen(false)}
+        />
+      )}
     </>
   );
 };

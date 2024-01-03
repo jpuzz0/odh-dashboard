@@ -10,7 +10,7 @@ import {
 } from '@patternfly/react-core';
 import { ProjectKind } from '~/k8sTypes';
 import { byName, ProjectsContext } from '~/concepts/projects/ProjectsContext';
-import DeletePipelineServerModal from '~/concepts/pipelines/content/DeletePipelineServerModal';
+import { DeletePipelineServerModal } from '~/concepts/pipelines/content/delete';
 import { ConfigurePipelinesServerModal } from '~/concepts/pipelines/content/configurePipelinesServer/ConfigurePipelinesServerModal';
 import ViewPipelineServerModal from '~/concepts/pipelines/content/ViewPipelineServerModal';
 import useSyncPreferredProject from '~/concepts/projects/useSyncPreferredProject';

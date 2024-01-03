@@ -21,7 +21,6 @@ import PipelineDetailsYAML from '~/concepts/pipelines/content/pipelinesDetails/P
 import { usePipelinesAPI } from '~/concepts/pipelines/context';
 import PipelineTopologyEmpty from '~/concepts/pipelines/content/pipelinesDetails/PipelineTopologyEmpty';
 import { PipelineCoreDetailsPageComponent } from '~/concepts/pipelines/content/types';
-import DeletePipelineCoreResourceModal from '~/concepts/pipelines/content/DeletePipelineCoreResourceModal';
 import usePipelineVersionsForPipeline from '~/concepts/pipelines/apiHooks/usePipelineVersionsForPipeline';
 import PipelineSelector from '~/concepts/pipelines/content/pipelineSelector/PipelineSelector';
 import { pipelineVersionSelectorColumns } from '~/concepts/pipelines/content/pipelineSelector/columns';
@@ -41,7 +40,6 @@ const PipelineDetails: PipelineCoreDetailsPageComponent = ({ breadcrumbPath }) =
   const { pipelineVersionId } = useParams();
   const navigate = useNavigate();
 
-  const [isDeleting, setDeleting] = React.useState(false);
   const [activeTabKey, setActiveTabKey] = React.useState<string | number>(PipelineDetailsTab.GRAPH);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
@@ -61,7 +59,7 @@ const PipelineDetails: PipelineCoreDetailsPageComponent = ({ breadcrumbPath }) =
   const isLoaded = isPipelineVersionLoaded && isPipelineLoaded && isPipelineVersionTemplateLoaded;
 
   if (pipelineVersionLoadError || pipelineLoadError) {
-    const errorText = 'Pipeline version not found';
+    const errorText = `Pipeline ${pipelineLoadError ? '' : 'version'} not found`;
 
     return (
       <ApplicationsPage
@@ -136,7 +134,6 @@ const PipelineDetails: PipelineCoreDetailsPageComponent = ({ breadcrumbPath }) =
                     <FlexItem>
                       {isLoaded && (
                         <PipelineDetailsActions
-                          onDelete={() => setDeleting(true)}
                           pipeline={pipeline}
                           pipelineVersion={pipelineVersion}
                         />
@@ -212,13 +209,6 @@ const PipelineDetails: PipelineCoreDetailsPageComponent = ({ breadcrumbPath }) =
           </DrawerContentBody>
         </DrawerContent>
       </Drawer>
-      <DeletePipelineCoreResourceModal
-        type="pipeline"
-        toDeleteResources={isDeleting && pipelineVersion ? [pipelineVersion] : []}
-        onClose={() => {
-          navigate(`/pipelines/${namespace}`);
-        }}
-      />
     </>
   );
 };

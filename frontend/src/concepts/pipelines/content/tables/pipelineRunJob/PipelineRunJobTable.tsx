@@ -6,7 +6,7 @@ import { useCheckboxTable } from '~/components/table';
 import PipelineRunJobTableRow from '~/concepts/pipelines/content/tables/pipelineRunJob/PipelineRunJobTableRow';
 import PipelineRunJobTableToolbar from '~/concepts/pipelines/content/tables/pipelineRunJob/PipelineRunJobTableToolbar';
 import EmptyTableView from '~/concepts/pipelines/content/tables/EmptyTableView';
-import DeletePipelineCoreResourceModal from '~/concepts/pipelines/content/DeletePipelineCoreResourceModal';
+import { DeletePipelineCoreResourceModal } from '~/concepts/pipelines/content/delete';
 import { usePipelinesAPI } from '~/concepts/pipelines/context';
 import { PipelineType } from '~/concepts/pipelines/content/tables/utils';
 import { PipelinesFilter } from '~/concepts/pipelines/types';

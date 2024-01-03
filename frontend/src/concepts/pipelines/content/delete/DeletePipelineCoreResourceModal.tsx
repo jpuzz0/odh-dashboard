@@ -16,8 +16,8 @@ import { PipelineCoreResourceKF } from '~/concepts/pipelines/kfTypes';
 import { K8sAPIOptions } from '~/k8sTypes';
 import useNotification from '~/utilities/useNotification';
 import { PipelineType } from '~/concepts/pipelines/content/tables/utils';
-import PipelineJobReferenceName from './PipelineJobReferenceName';
-import PipelineRunTypeLabel from './PipelineRunTypeLabel';
+import PipelineJobReferenceName from '~/concepts/pipelines/content/PipelineJobReferenceName';
+import PipelineRunTypeLabel from '~/concepts/pipelines/content/PipelineRunTypeLabel';
 
 type DeletePipelineCoreResourceModalProps = {
   type: 'triggered run' | 'scheduled run' | 'pipeline';

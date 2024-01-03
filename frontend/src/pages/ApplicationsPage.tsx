@@ -15,6 +15,7 @@ import {
   Stack,
   EmptyStateHeader,
   Flex,
+  Bullseye,
 } from '@patternfly/react-core';
 
 type ApplicationsPageProps = {
@@ -97,17 +98,6 @@ const ApplicationsPage: React.FC<ApplicationsPageProps> = ({
       );
     }
 
-    if (!loaded) {
-      return (
-        <PageSection isFilled>
-          <EmptyState variant={EmptyStateVariant.lg} data-id="loading-empty-state">
-            <Spinner size="xl" />
-            <EmptyStateHeader titleText="Loading" headingLevel="h1" />
-          </EmptyState>
-        </PageSection>
-      );
-    }
-
     if (empty) {
       return !emptyStatePage ? (
         <PageSection isFilled>
@@ -134,6 +124,14 @@ const ApplicationsPage: React.FC<ApplicationsPageProps> = ({
 
     return children;
   };
+
+  if (!loaded) {
+    return (
+      <Bullseye>
+        <Spinner />
+      </Bullseye>
+    );
+  }
 
   return (
     <>

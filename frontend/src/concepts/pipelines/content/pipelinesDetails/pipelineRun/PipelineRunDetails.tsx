@@ -30,7 +30,7 @@ import {
   RunDetailsTabs,
   RunDetailsTabSelection,
 } from '~/concepts/pipelines/content/pipelinesDetails/pipelineRun/PipelineRunDrawerBottomTabs';
-import DeletePipelineCoreResourceModal from '~/concepts/pipelines/content/DeletePipelineCoreResourceModal';
+import { DeletePipelineCoreResourceModal } from '~/concepts/pipelines/content/delete';
 import { usePipelinesAPI } from '~/concepts/pipelines/context';
 import PipelineDetailsTitle from '~/concepts/pipelines/content/pipelinesDetails/PipelineDetailsTitle';
 import PipelineJobReferenceName from '~/concepts/pipelines/content/PipelineJobReferenceName';

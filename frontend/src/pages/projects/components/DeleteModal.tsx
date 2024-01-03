@@ -67,12 +67,12 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
       ]}
       variant="small"
     >
-      <Stack hasGutter>
-        <StackItem>{children}</StackItem>
+      <Stack hasGutter className="pf-v5-u-mt-md">
+        <StackItem className="pf-v5-u-mb-sm">{children}</StackItem>
         <StackItem>
-          Type <strong>{deleteNameSanitized}</strong> to confirm deletion:
-        </StackItem>
-        <StackItem>
+          <div className="pf-v5-u-mb-sm pf-v5-u-font-size-sm">
+            Type <b>{deleteNameSanitized}</b> to confirm deletion:
+          </div>
           <TextInput
             id="delete-modal-input"
             aria-label="Delete modal input"

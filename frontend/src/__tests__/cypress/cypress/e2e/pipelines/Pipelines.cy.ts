@@ -35,6 +35,12 @@ describe('Pipelines', () => {
     pipelinesTable.findRowByName('Test pipeline');
   });
 
+  it('incompatible dpsa version shows error', () => {
+    pipelinesGlobal.visit(projectName);
+    pipelinesGlobal.findIsApiAvailable().should('exist');
+    pipelinesGlobal.findIsServerIncompatible().should('exist');
+  });
+
   it('selects a different project', () => {
     cy.url().should('include', 'test-project-name');
 

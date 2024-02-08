@@ -22,22 +22,21 @@ const createRun = async (
   const data: CreatePipelineRunKFv2Data = {
     display_name: formData.nameDesc.name,
     description: formData.nameDesc.description,
-    pipeline_version_id: formData.version?.pipeline_version_id || '',
     pipeline_version_reference: {
       pipeline_id: formData.pipeline?.pipeline_id || '',
       pipeline_version_id: formData.version?.pipeline_version_id || '',
     },
-    // TODO, update runtime_config & pipeline_spec to be populated from formData
-    // https://issues.redhat.com/browse/RHOAIENG-2295
     runtime_config: {
-      parameters: { min_max_scaler: false, standard_scaler: true, neighbors: 0 },
-      pipeline_root: '',
-    },
-    pipeline_spec: {
-      parameters: formData.params?.map(({ value, label }) => ({ name: label, value })) ?? [],
+      parameters: {
+        ...formData.params,
+        min_max_scaler: formData.params['min_max_scaler'] === 'true',
+        neighbors: parseInt(formData.params['neighbors']),
+        standard_scaler: formData.params['standard_scaler'] === 'true',
+      },
     },
     service_account: '',
   };
+
   return createRun({}, data).then((run) => `/pipelineRun/view/${run.run_id}`);
   /* eslint-enable camelcase */
 };
@@ -67,7 +66,8 @@ const createJob = async (
     name: formData.nameDesc.name,
     description: formData.nameDesc.description,
     pipeline_spec: {
-      parameters: formData.params?.map(({ value, label }) => ({ name: label, value })) ?? [],
+      // TODO, update when recurring runs are worked on
+      // parameters: formData.params?.map(({ value, label }) => ({ name: label, value })) ?? [],
     },
     max_concurrency: '10',
     enabled: true,

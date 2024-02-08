@@ -24,7 +24,7 @@ import {
   UploadPipelineVersionAPI,
   DeletePipelineVersionAPI,
   GetPipelineVersionAPI,
-  ListPipelineVersionsByPipelineAPI,
+  ListPipelineVersionsAPI,
 } from './callTypes';
 import { handlePipelineFailures } from './errorUtils';
 
@@ -154,7 +154,7 @@ export const listPipelineVersionTemplates: ListPipelineVersionTemplatesAPI =
       ),
     );
 
-export const listPipelineVersionsByPipeline: ListPipelineVersionsByPipelineAPI =
+export const listPipelineVersions: ListPipelineVersionsAPI =
   (hostPath) => (opts, pipelineId, params) =>
     handlePipelineFailures(
       proxyGET(

@@ -13,7 +13,7 @@ import {
   CreatePipelineRunJobKFData,
   PipelinesFilterPredicate,
   ResourceKeyKF,
-  ListPipelineVersionsResourceKF,
+  ListPipelineVersionsKF,
   PipelineKFv2,
   PipelineVersionKFv2,
   PipelineCoreResourceKFv2,
@@ -104,11 +104,11 @@ export type ListPipelineVersionTemplates = (
   opts: K8sAPIOptions,
   pipelineVersionId: string,
 ) => Promise<ListPipelineVersionTemplateResourceKF>;
-export type ListPipelineVersionsByPipeline = (
+export type ListPipelineVersions = (
   opts: K8sAPIOptions,
   pipelineId: string,
   params?: PipelineParams,
-) => Promise<ListPipelineVersionsResourceKF>;
+) => Promise<ListPipelineVersionsKF>;
 export type StopPipelineRun = (opts: K8sAPIOptions, runId: string) => Promise<void>;
 export type UpdatePipelineRunJob = (
   opts: K8sAPIOptions,
@@ -148,7 +148,7 @@ export type PipelineAPIs = {
   listPipelineRunJobs: ListPipelineRunJobs;
   listPipelineRunsByPipeline: ListPipelineRunsByPipeline;
   listPipelineVersionTemplates: ListPipelineVersionTemplates;
-  listPipelineVersionsByPipeline: ListPipelineVersionsByPipeline;
+  listPipelineVersions: ListPipelineVersions;
   stopPipelineRun: StopPipelineRun;
   updatePipelineRunJob: UpdatePipelineRunJob;
   uploadPipeline: UploadPipeline;

@@ -127,10 +127,22 @@ export type PipelineVersionKF = {
   description?: string;
 };
 
+// https://www.kubeflow.org/docs/components/pipelines/v2/reference/api/kubeflow-pipeline-api-spec/#/definitions/v2beta1PipelineVersion
+export type PipelineSpec = Record<string, unknown> & {
+  pipelineInfo: {
+    name: string;
+  };
+  root: Record<string, unknown> & {
+    inputDefinitions: { parameters: Record<string, { parameterType: string }> };
+  };
+  schemaVersion: string;
+  sdkVersion: string;
+};
+
 export type PipelineVersionKFv2 = PipelineCoreResourceKFv2 & {
   pipeline_id: string;
   pipeline_version_id: string;
-  pipeline_spec: NonNullable<unknown>; // TODO replace this with the actual type: https://issues.redhat.com/browse/RHOAIENG-2279
+  pipeline_spec: PipelineSpec;
   code_source_url?: string;
   package_url?: UrlKF;
   error?: GoogleRpcStatusKF;
@@ -375,7 +387,7 @@ export type ListPipelineVersionTemplateResourceKF = {
   /** YAML template of a PipelineRunKind */
   template: string;
 };
-export type ListPipelineVersionsResourceKF = PipelineKFCallCommon<{
+export type ListPipelineVersionsKF = PipelineKFCallCommon<{
   pipeline_versions: PipelineVersionKFv2[];
 }>;
 
@@ -412,8 +424,11 @@ export type CreatePipelineRunKFv2Data = Omit<
   | 'state'
   | 'state_history'
   | 'run_details'
+  | 'runtime_config'
 > & {
-  pipeline_spec: Pick<PipelineSpecKF, 'parameters'>;
+  runtime_config: {
+    parameters: Record<string, boolean | string | number>;
+  };
 };
 
 export type CreatePipelineRunJobKFData = Omit<

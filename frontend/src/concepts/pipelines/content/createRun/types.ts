@@ -35,21 +35,16 @@ export type RunType =
   | { type: RunTypeOption.ONE_TRIGGER }
   | { type: RunTypeOption.SCHEDULED; data: RunTypeScheduledData };
 
-export type RunParam = {
-  label: string;
-  value: string;
-};
-
 export type RunFormData = {
   project: ProjectKind;
   nameDesc: { name: string; description: string };
   pipeline: PipelineKFv2 | null;
   version: PipelineVersionKFv2 | null;
   runType: RunType;
-  params?: RunParam[];
+  params?: Record<string, unknown>;
 };
 
 export type SafeRunFormData = RunFormData & {
   pipeline: PipelineKFv2;
-  params: RunParam[];
+  params: Record<string, string>;
 };

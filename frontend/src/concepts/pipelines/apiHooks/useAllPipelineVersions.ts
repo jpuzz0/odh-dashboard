@@ -79,3 +79,36 @@ export const useAllPipelineVersions = (
     refreshRate,
   );
 };
+
+/**
+ * Fetch all version pages for a single pipeline.
+ */
+export const useAllVersionsByPipelineId = (
+  pipelineId: string,
+  options?: PipelineOptions,
+  refreshRate?: number,
+): FetchState<PipelineListPaged<PipelineVersionKFv2>> => {
+  const { api } = usePipelinesAPI();
+
+  return usePipelineQuery<PipelineVersionKFv2>(
+    React.useCallback(
+      async (opts, params) => {
+        if (!pipelineId) {
+          return Promise.reject(new NotReadyError('No pipeline ID.'));
+        }
+
+        const allVersions = await getAllVersions(
+          opts,
+          pipelineId,
+          params,
+          api.listPipelineVersions,
+        );
+
+        return { items: allVersions };
+      },
+      [api.listPipelineVersions, pipelineId],
+    ),
+    options,
+    refreshRate,
+  );
+};

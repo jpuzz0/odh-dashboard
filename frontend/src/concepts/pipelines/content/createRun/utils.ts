@@ -8,6 +8,7 @@ import {
 import { ParametersKF, PipelineVersionKFv2 } from '~/concepts/pipelines/kfTypes';
 import { getCorePipelineSpec } from '~/concepts/pipelines/getCorePipelineSpec';
 import { convertToDate } from '~/utilities/time';
+import { RUN_NAME_CHARACTER_LIMIT } from './const';
 
 const runTypeSafeData = (runType: RunFormData['runType']): boolean =>
   runType.type !== RunTypeOption.SCHEDULED ||
@@ -45,6 +46,7 @@ export const isFilledRunFormData = (formData: RunFormData): formData is SafeRunF
 
   return (
     !!formData.nameDesc.name &&
+    formData.nameDesc.name.length <= RUN_NAME_CHARACTER_LIMIT &&
     !!formData.pipeline &&
     !!formData.version &&
     hasRequiredInputParams &&

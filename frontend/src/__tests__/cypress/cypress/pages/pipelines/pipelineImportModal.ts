@@ -40,7 +40,7 @@ class PipelineImportModal extends Modal {
   }
 
   fillPipelineName(value: string) {
-    this.findPipelineNameInput().clear().type(value);
+    this.findPipelineNameInput().clear().type(value).blur();
   }
 
   fillPipelineDescription(value: string) {

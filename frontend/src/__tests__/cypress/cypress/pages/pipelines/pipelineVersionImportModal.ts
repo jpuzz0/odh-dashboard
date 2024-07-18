@@ -65,7 +65,7 @@ class PipelineImportModal extends Modal {
   }
 
   fillVersionName(value: string) {
-    this.findVersionNameInput().clear().type(value);
+    this.findVersionNameInput().clear().type(value).blur();
   }
 
   fillVersionDescription(value: string) {

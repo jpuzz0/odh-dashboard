@@ -23,6 +23,9 @@ type NameDescriptionFieldProps = {
   showK8sName?: boolean;
   disableK8sName?: boolean;
   maxLength?: number;
+  nameHelperText?: React.ReactNode;
+  onNameBlur?: () => void;
+  onNameChange?: () => void;
 };
 
 const NameDescriptionField: React.FC<NameDescriptionFieldProps> = ({
@@ -34,7 +37,12 @@ const NameDescriptionField: React.FC<NameDescriptionFieldProps> = ({
   showK8sName,
   disableK8sName,
   maxLength,
+  nameHelperText,
+  onNameBlur,
+  onNameChange,
 }) => {
+  const { name } = data;
+  const hasMaxLengthError = maxLength && name.length > maxLength;
   const autoSelectNameRef = React.useRef<HTMLInputElement | null>(null);
 
   React.useEffect(() => {
@@ -45,11 +53,11 @@ const NameDescriptionField: React.FC<NameDescriptionFieldProps> = ({
 
   const k8sName = React.useMemo(() => {
     if (showK8sName) {
-      return translateDisplayNameForK8s(data.name);
+      return translateDisplayNameForK8s(name);
     }
 
     return '';
-  }, [showK8sName, data.name]);
+  }, [showK8sName, name]);
 
   return (
     <Stack hasGutter>
@@ -61,15 +69,24 @@ const NameDescriptionField: React.FC<NameDescriptionFieldProps> = ({
             id={nameFieldId}
             data-testid={nameFieldId}
             name={nameFieldId}
-            value={data.name}
-            onChange={(e, name) => setData({ ...data, name })}
-            maxLength={maxLength}
+            value={name}
+            onChange={(_e, value) => {
+              setData({ ...data, name: value });
+              onNameChange?.();
+            }}
+            onBlur={onNameBlur}
+            validated={hasMaxLengthError ? 'error' : 'default'}
           />
-          {maxLength && (
+
+          {hasMaxLengthError && (
             <HelperText>
-              <HelperTextItem>{`Cannot exceed ${maxLength} characters`}</HelperTextItem>
+              <HelperTextItem variant="error" hasIcon>
+                Cannot exceed {maxLength} characters.
+              </HelperTextItem>
             </HelperText>
           )}
+
+          {nameHelperText}
         </FormGroup>
       </StackItem>
       {showK8sName && (

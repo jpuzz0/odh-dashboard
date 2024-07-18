@@ -14,6 +14,8 @@ import { usePipelinesAPI } from '~/concepts/pipelines/context';
 import { usePipelineImportModalData } from '~/concepts/pipelines/content/import/useImportModalData';
 import { PipelineKFv2 } from '~/concepts/pipelines/kfTypes';
 import { getDisplayNameFromK8sResource } from '~/concepts/k8s/utils';
+import { DuplicateNameHelperText } from '~/concepts/pipelines/content/DuplicateNameHelperText';
+import { getNameEqualsFilter } from '~/concepts/pipelines/utils';
 import PipelineUploadRadio from './PipelineUploadRadio';
 import { PipelineUploadOption } from './utils';
 
@@ -28,11 +30,13 @@ const PipelineImportModal: React.FC<PipelineImportModalProps> = ({ isOpen, onClo
   const [error, setError] = React.useState<Error | undefined>();
   const [{ name, description, fileContents, pipelineUrl, uploadOption }, setData, resetData] =
     usePipelineImportModalData();
+  const [hasDuplicateName, setHasDuplicateName] = React.useState(false);
 
   const isImportButtonDisabled =
     !apiAvailable ||
     importing ||
     !name ||
+    hasDuplicateName ||
     (uploadOption === PipelineUploadOption.URL_IMPORT ? !pipelineUrl : !fileContents);
 
   const onBeforeClose = (pipeline?: PipelineKFv2) => {
@@ -41,6 +45,19 @@ const PipelineImportModal: React.FC<PipelineImportModalProps> = ({ isOpen, onClo
     setError(undefined);
     resetData();
   };
+
+  const onNameBlur = React.useCallback(async () => {
+    if (name) {
+      const { pipelines: duplicatePipelines } = await api.listPipelines(
+        {},
+        getNameEqualsFilter(name),
+      );
+
+      if (duplicatePipelines?.length) {
+        setHasDuplicateName(true);
+      }
+    }
+  }, [api, name]);
 
   const onSubmit = () => {
     setImporting(true);
@@ -121,8 +138,15 @@ const PipelineImportModal: React.FC<PipelineImportModalProps> = ({ isOpen, onClo
                 data-testid="pipeline-name"
                 name="pipeline-name"
                 value={name}
-                onChange={(e, value) => setData('name', value)}
+                onChange={(_e, value) => {
+                  setData('name', value);
+                  setHasDuplicateName(false);
+                }}
+                onBlur={onNameBlur}
+                validated={hasDuplicateName ? 'error' : 'default'}
               />
+
+              {hasDuplicateName && <DuplicateNameHelperText name={name} isError />}
             </FormGroup>
           </StackItem>
           <StackItem>
@@ -134,7 +158,7 @@ const PipelineImportModal: React.FC<PipelineImportModalProps> = ({ isOpen, onClo
                 data-testid="pipeline-description"
                 name="pipeline-description"
                 value={description}
-                onChange={(e, value) => setData('description', value)}
+                onChange={(_e, value) => setData('description', value)}
               />
             </FormGroup>
           </StackItem>

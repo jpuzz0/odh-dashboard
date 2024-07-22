@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import {
   Alert,
   Button,
@@ -10,12 +12,14 @@ import {
   TextArea,
   TextInput,
 } from '@patternfly/react-core';
+
 import { usePipelinesAPI } from '~/concepts/pipelines/context';
 import { usePipelineImportModalData } from '~/concepts/pipelines/content/import/useImportModalData';
 import { PipelineKFv2 } from '~/concepts/pipelines/kfTypes';
 import { getDisplayNameFromK8sResource } from '~/concepts/k8s/utils';
 import { DuplicateNameHelperText } from '~/concepts/pipelines/content/DuplicateNameHelperText';
 import { getNameEqualsFilter } from '~/concepts/pipelines/utils';
+import { pipelineVersionDetailsRoute } from '~/routes';
 import PipelineUploadRadio from './PipelineUploadRadio';
 import { PipelineUploadOption } from './utils';
 
@@ -25,7 +29,8 @@ type PipelineImportModalProps = {
 };
 
 const PipelineImportModal: React.FC<PipelineImportModalProps> = ({ isOpen, onClose }) => {
-  const { project, api, apiAvailable } = usePipelinesAPI();
+  const navigate = useNavigate();
+  const { project, api, apiAvailable, namespace } = usePipelinesAPI();
   const [importing, setImporting] = React.useState(false);
   const [error, setError] = React.useState<Error | undefined>();
   const [{ name, description, fileContents, pipelineUrl, uploadOption }, setData, resetData] =
@@ -39,12 +44,35 @@ const PipelineImportModal: React.FC<PipelineImportModalProps> = ({ isOpen, onClo
     hasDuplicateName ||
     (uploadOption === PipelineUploadOption.URL_IMPORT ? !pipelineUrl : !fileContents);
 
-  const onBeforeClose = (pipeline?: PipelineKFv2) => {
-    onClose(pipeline);
-    setImporting(false);
-    setError(undefined);
-    resetData();
-  };
+  const onBeforeClose = React.useCallback(
+    (pipeline?: PipelineKFv2) => {
+      onClose(pipeline);
+      setImporting(false);
+      setError(undefined);
+      resetData();
+    },
+    [onClose, resetData],
+  );
+
+  const onSubmitSuccess = React.useCallback(
+    async (pipeline: PipelineKFv2) => {
+      onBeforeClose(pipeline);
+
+      const { pipeline_versions: versions } = await api.listPipelineVersions(
+        {},
+        pipeline.pipeline_id,
+        {
+          pageSize: 1,
+        },
+      );
+      const versionId = versions?.[0].pipeline_version_id;
+
+      if (versionId) {
+        navigate(pipelineVersionDetailsRoute(namespace, pipeline.pipeline_id, versionId));
+      }
+    },
+    [api, namespace, navigate, onBeforeClose],
+  );
 
   const onNameBlur = React.useCallback(async () => {
     if (name) {
@@ -66,7 +94,7 @@ const PipelineImportModal: React.FC<PipelineImportModalProps> = ({ isOpen, onClo
     if (uploadOption === PipelineUploadOption.FILE_UPLOAD) {
       api
         .uploadPipeline({}, name, description, fileContents)
-        .then((pipeline) => onBeforeClose(pipeline))
+        .then(onSubmitSuccess)
         .catch((e) => {
           setImporting(false);
           setError(e);
@@ -91,7 +119,7 @@ const PipelineImportModal: React.FC<PipelineImportModalProps> = ({ isOpen, onClo
             },
           },
         )
-        .then((pipeline) => onBeforeClose(pipeline))
+        .then(onSubmitSuccess)
         .catch((e) => {
           setImporting(false);
           setError(e);

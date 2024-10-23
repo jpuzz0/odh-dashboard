@@ -13,19 +13,21 @@ import {
 import DashboardModalFooter from '~/concepts/dashboard/DashboardModalFooter';
 import PVSizeField from '~/pages/projects/components/PVSizeField';
 import { StorageData } from '~/pages/projects/types';
-import FieldGroupHelpLabelIcon from '~/components/FieldGroupHelpLabelIcon';
 import StorageClassSelect from './StorageClassSelect';
+import SpawnerMountPathField from './SpawnerMountPathField';
 
 interface ClusterStorageEditModalProps {
   storageData: StorageData;
   onUpdate: (storageData: StorageData) => void;
   onClose: () => void;
+  isDefault?: boolean;
 }
 
 export const ClusterStorageEditModal: React.FC<ClusterStorageEditModalProps> = ({
   storageData,
   onUpdate,
   onClose,
+  isDefault,
 }) => {
   const [name, setName] = React.useState(storageData.name);
   const [description, setDescription] = React.useState(storageData.description);
@@ -102,30 +104,12 @@ export const ClusterStorageEditModal: React.FC<ClusterStorageEditModalProps> = (
           setSize={(storageSize) => setSize(storageSize)}
         />
 
-        <FormGroup
-          label="Mount path"
-          fieldId="mount-path"
-          isRequired
-          labelIcon={
-            <FieldGroupHelpLabelIcon
-              content={
-                <>
-                  The directory within a container where a volume is mounted and accessible. Only
-                  standard paths that begin with <b>/opt/app-root/src/</b> are visible in the
-                  JupyterLab file browser.
-                </>
-              }
-            />
-          }
-        >
-          <TextInput
-            isRequired
-            value={mountPath}
-            onChange={(_, value) => setMountPath(value)}
-            id="mount-path"
-            data-testid="mount-path-input"
-          />
-        </FormGroup>
+        <SpawnerMountPathField
+          isCreate={!isDefault}
+          inUseMountPaths={[]}
+          mountPath={mountPath ?? ''}
+          onChange={(value) => setMountPath(value)}
+        />
       </Form>
     </Modal>
   );

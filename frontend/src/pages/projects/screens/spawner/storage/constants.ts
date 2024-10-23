@@ -33,3 +33,5 @@ export const defaultClusterStorage = {
   mountPath: '/opt/apt-root/src/',
   storageClassName: '',
 };
+
+export const MOUNT_PATH_PREFIX = '/opt/app-root/src/';

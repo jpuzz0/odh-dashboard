@@ -126,6 +126,7 @@ export const ClusterStorageTable: React.FC<ClusterStorageTableProps> = ({
         )}
       />
 
+      {/* Todo Dipanshu: Change the modal to the new one */}
       {isEditModalOpen && selectedStorage && (
         <ClusterStorageEditModal
           storageData={selectedStorage}
@@ -134,6 +135,7 @@ export const ClusterStorageTable: React.FC<ClusterStorageTableProps> = ({
             setIsEditModalOpen(false);
             setSelectedId(undefined);
           }}
+          isDefault={selectedStorage === storageData.find((formData) => formData.id === 0)}
         />
       )}
 

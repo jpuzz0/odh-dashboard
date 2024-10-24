@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Form, Modal, Stack, StackItem } from '@patternfly/react-core';
-import { attachNotebookPVC, createPvc, removeNotebookPVC, restartNotebook, updatePvc } from '~/api';
 import { NotebookKind, PersistentVolumeClaimKind } from '~/k8sTypes';
 import { ProjectDetailsContext } from '~/pages/projects/ProjectDetailsContext';
 import { useCreateStorageObjectForNotebook } from '~/pages/projects/screens/spawner/storage/utils';
@@ -13,32 +12,54 @@ import {
 import NotebookRestartAlert from '~/pages/projects/components/NotebookRestartAlert';
 import useWillNotebooksRestart from '~/pages/projects/notebook/useWillNotebooksRestart';
 import DashboardModalFooter from '~/concepts/dashboard/DashboardModalFooter';
-import { getDescriptionFromK8sResource, getDisplayNameFromK8sResource } from '~/concepts/k8s/utils';
 import { SupportedArea, useIsAreaAvailable } from '~/concepts/areas';
 import usePreferredStorageClass from '~/pages/projects/screens/spawner/storage/usePreferredStorageClass';
 import useDefaultStorageClass from '~/pages/projects/screens/spawner/storage/useDefaultStorageClass';
+import { StorageData } from '~/pages/projects/types';
+import { getNotebookMountPaths } from '~/pages/projects/notebook/utils';
+import SpawnerMountPathField from '~/pages/projects/screens/spawner/storage/SpawnerMountPathField';
 import ExistingConnectedNotebooks from './ExistingConnectedNotebooks';
 
-type AddStorageModalProps = {
+export type BaseStorageModalProps = {
   existingData?: PersistentVolumeClaimKind;
-  onClose: (submit: boolean) => void;
+  onClose: (submit: boolean, storageData?: StorageData) => void;
+  isSpawnerPage?: boolean;
+  onSubmit: (
+    storageData: StorageData,
+    removedNotebooks: string[],
+    notebookName?: string,
+    dryRun?: boolean,
+  ) => Promise<void>;
+  submitLabel?: string;
+  title?: string;
+  description?: string;
 };
 
-const ManageStorageModal: React.FC<AddStorageModalProps> = ({ existingData, onClose }) => {
+const BaseStorageModal: React.FC<BaseStorageModalProps> = ({
+  existingData,
+  onClose,
+  isSpawnerPage,
+  onSubmit,
+  submitLabel = 'Add storage',
+  title = 'Add cluster storage',
+  description = 'Add storage and optionally connect it with an existing workbench.',
+}) => {
   const isStorageClassesAvailable = useIsAreaAvailable(SupportedArea.STORAGE_CLASSES).status;
   const preferredStorageClass = usePreferredStorageClass();
   const [defaultStorageClass] = useDefaultStorageClass();
-
+  const {
+    notebooks: { data },
+  } = React.useContext(ProjectDetailsContext);
+  const notebooks = data.map(({ notebook }) => notebook);
   const [createData, setCreateData, resetData] = useCreateStorageObjectForNotebook(existingData);
   const [actionInProgress, setActionInProgress] = React.useState(false);
   const [error, setError] = React.useState<Error | undefined>();
-  const { currentProject } = React.useContext(ProjectDetailsContext);
-  const namespace = currentProject.metadata.name;
   const { notebooks: connectedNotebooks } = useRelatedNotebooks(
     ConnectedNotebookContext.EXISTING_PVC,
     existingData?.metadata.name,
   );
   const [removedNotebooks, setRemovedNotebooks] = React.useState<string[]>([]);
+  const [notebookName, setNotebookName] = React.useState<string>();
 
   const {
     notebooks: removableNotebooks,
@@ -67,10 +88,11 @@ const ManageStorageModal: React.FC<AddStorageModalProps> = ({ existingData, onCl
     setCreateData,
   ]);
 
-  const onBeforeClose = (submitted: boolean) => {
-    onClose(submitted);
+  const onBeforeClose = (submitted: boolean, storageData?: StorageData) => {
+    onClose(submitted, storageData);
     setActionInProgress(false);
     setRemovedNotebooks([]);
+    setNotebookName(undefined);
     setError(undefined);
     resetData();
   };
@@ -82,85 +104,42 @@ const ManageStorageModal: React.FC<AddStorageModalProps> = ({ existingData, onCl
   const canCreate =
     !actionInProgress && createData.nameDesc.name.trim() && hasValidNotebookRelationship;
 
-  const runPromiseActions = async (dryRun: boolean) => {
-    const {
-      forNotebook: { name: notebookName, mountPath },
-    } = createData;
-    const pvcPromises: Promise<PersistentVolumeClaimKind | NotebookKind>[] = [];
+  const submit = () => {
+    setError(undefined);
+    setActionInProgress(true);
+
     const storageData = {
       name: createData.nameDesc.name,
       description: createData.nameDesc.description,
       size: createData.size,
       storageClassName: createData.storageClassName,
+      mountPath: isSpawnerPage ? createData.mountPath : createData.forNotebook.mountPath.value,
     };
 
-    if (existingData) {
-      const pvcName = existingData.metadata.name;
-      if (
-        getDisplayNameFromK8sResource(existingData) !== createData.nameDesc.name ||
-        getDescriptionFromK8sResource(existingData) !== createData.nameDesc.description ||
-        existingData.spec.resources.requests.storage !== createData.size ||
-        existingData.spec.storageClassName !== createData.storageClassName
-      ) {
-        pvcPromises.push(updatePvc(storageData, existingData, namespace, { dryRun }));
-      }
-      if (existingData.spec.resources.requests.storage !== createData.size) {
-        connectedNotebooks.map((connectedNotebook) =>
-          pvcPromises.push(restartNotebook(connectedNotebook.metadata.name, namespace, { dryRun })),
-        );
-      }
-      if (removedNotebooks.length > 0) {
-        // Remove connected pvcs
-        pvcPromises.push(
-          ...removedNotebooks.map((currentNotebookName) =>
-            removeNotebookPVC(currentNotebookName, namespace, pvcName, { dryRun }),
-          ),
-        );
-      }
-
-      await Promise.all(pvcPromises);
-      if (notebookName) {
-        await attachNotebookPVC(notebookName, namespace, pvcName, mountPath.value, {
-          dryRun,
-        });
-      }
-      return;
-    }
-    const createdPvc = await createPvc(storageData, namespace, { dryRun });
-    if (notebookName) {
-      await attachNotebookPVC(notebookName, namespace, createdPvc.metadata.name, mountPath.value, {
-        dryRun,
-      });
-    }
-  };
-
-  const submit = () => {
-    setError(undefined);
-    setActionInProgress(true);
-
-    runPromiseActions(true)
-      .then(() => runPromiseActions(false).then(() => onBeforeClose(true)))
+    onSubmit(storageData, removedNotebooks, notebookName, true)
+      .then(() => onSubmit(storageData, removedNotebooks, notebookName, false))
+      .then(() => onBeforeClose(true, storageData))
       .catch((e) => {
         setError(e);
         setActionInProgress(false);
       });
   };
 
+  const inUseMountPaths = getNotebookMountPaths(
+    notebooks.find((notebook) => notebook.metadata.name === createData.forNotebook.name),
+  );
+
   return (
     <Modal
-      title={existingData ? 'Update cluster storage' : 'Add cluster storage'}
-      description={
-        existingData
-          ? 'Make changes to cluster storage, or connect it to additional workspaces.'
-          : 'Add storage and optionally connect it with an existing workbench.'
-      }
+      title={title}
+      description={description}
       variant="medium"
       isOpen
       onClose={() => onBeforeClose(false)}
       showClose
       footer={
         <DashboardModalFooter
-          submitLabel={existingData ? 'Update' : 'Add storage'}
+          submitLabel={submitLabel}
           onSubmit={submit}
           onCancel={() => onBeforeClose(false)}
           isSubmitDisabled={!canCreate}
@@ -185,31 +164,45 @@ const ManageStorageModal: React.FC<AddStorageModalProps> = ({ existingData, onCl
               disableStorageClassSelect={!!existingData}
             />
           </StackItem>
-          {createData.hasExistingNotebookConnections && (
+          {isSpawnerPage ? (
             <StackItem>
-              <ExistingConnectedNotebooks
-                connectedNotebooks={removableNotebooks}
-                onNotebookRemove={(notebook: NotebookKind) =>
-                  setRemovedNotebooks([...removedNotebooks, notebook.metadata.name])
-                }
-                loaded={removableNotebookLoaded}
-                error={removableNotebookError}
+              <SpawnerMountPathField
+                isCreate
+                inUseMountPaths={inUseMountPaths}
+                mountPath={createData.mountPath ?? ''}
+                onChange={(path) => setCreateData('mountPath', path)}
               />
             </StackItem>
-          )}
-          <StackItem>
-            <StorageNotebookConnections
-              setForNotebookData={(forNotebookData) => {
-                setCreateData('forNotebook', forNotebookData);
-              }}
-              forNotebookData={createData.forNotebook}
-              connectedNotebooks={connectedNotebooks}
-            />
-          </StackItem>
-          {restartNotebooks.length !== 0 && (
-            <StackItem>
-              <NotebookRestartAlert notebooks={restartNotebooks} />
-            </StackItem>
+          ) : (
+            <>
+              {createData.hasExistingNotebookConnections && (
+                <StackItem>
+                  <ExistingConnectedNotebooks
+                    connectedNotebooks={removableNotebooks}
+                    onNotebookRemove={(notebook: NotebookKind) =>
+                      setRemovedNotebooks([...removedNotebooks, notebook.metadata.name])
+                    }
+                    loaded={removableNotebookLoaded}
+                    error={removableNotebookError}
+                  />
+                </StackItem>
+              )}
+              <StackItem>
+                <StorageNotebookConnections
+                  setForNotebookData={(forNotebookData) => {
+                    setNotebookName(forNotebookData.name);
+                    setCreateData('forNotebook', forNotebookData);
+                  }}
+                  forNotebookData={createData.forNotebook}
+                  connectedNotebooks={connectedNotebooks}
+                />
+              </StackItem>
+              {restartNotebooks.length !== 0 && (
+                <StackItem>
+                  <NotebookRestartAlert notebooks={restartNotebooks} />
+                </StackItem>
+              )}
+            </>
           )}
         </Stack>
       </Form>
@@ -217,4 +210,4 @@ const ManageStorageModal: React.FC<AddStorageModalProps> = ({ existingData, onCl
   );
 };
 
-export default ManageStorageModal;
+export default BaseStorageModal;
